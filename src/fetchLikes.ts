@@ -5,15 +5,17 @@ dotenv.config();
 
 const main = async () => {
 
-	const client = new TwitterAPI({
-		appKey: process.env.TWITTER_APP_KEY,
-		appSecret: process.env.TWITTER_APP_SECRET,
-		accessToken: process.env.TWITTER_ACCESS_TOKEN,
-		accessSecret: process.env.TWITTER_ACCESS_SECRET,
-	});
+  const client = new TwitterAPI({
+    appKey: process.env.TWITTER_APP_KEY,
+    appSecret: process.env.TWITTER_APP_SECRET,
+    accessToken: process.env.TWITTER_ACCESS_TOKEN,
+    accessSecret: process.env.TWITTER_ACCESS_SECRET,
+  });
 
+  // 自身のtwitteridを取得
   const meUser = await client.v2.me();
 
+  // 直近70件のtweetを取得
   const tweetsOfMe = await client.v2.userTimeline(
     meUser.data.id,
     {
@@ -22,6 +24,7 @@ const main = async () => {
     }
   );
 
+  // tweetIdからtweetに対するいいねを繰り返し処理で取得し全て配列に入れる
   const result = await Promise.all(tweetsOfMe.data.data.map(async (data, i) => {
     const usersPaginated = await client.v2.tweetLikedBy(
       data.id,
@@ -38,6 +41,7 @@ const main = async () => {
     concatResult = concatResult.concat(result[i])
   }
 
+  // 配列の中でIdに被りがあるものをカウント
   let count = {};
   for (var i = 0; i < concatResult.length; i++) {
     var elm = concatResult[i];
@@ -46,6 +50,7 @@ const main = async () => {
     count[elm] = (count[elm] || 0) + 1;
   }
 
+  // ソート
   const countArray = Object.entries(count).map(([id, likes]) => ({id, likes}))
   countArray.sort(function(a, b) {
     if (a.likes < b.likes) {
